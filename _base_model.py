@@ -120,7 +120,7 @@ class CNNClassifier(nn.Module):
     def __init__(
         self,
         input_shape=(3, 32, 32),
-        output_nb_classes=10,
+        num_classes=10,
         cnn_encoder_config=None,
         fc_head_config=None,
     ):
@@ -137,7 +137,7 @@ class CNNClassifier(nn.Module):
         )
         cls_head = FCHead(
             input_shape=encoder.output_shape,
-            op_out_features=output_nb_classes,
+            op_out_features=num_classes,
             **fc_head_config
         )
 
@@ -145,6 +145,7 @@ class CNNClassifier(nn.Module):
         self.cls_head = cls_head
     
     def forward(self, x):
-        x = self.encoder(x)
-        x = self.cls_head(x)
-        return x
+        features = self.encoder(x)
+        features = torch.flatten(features, start_dim=1)
+        y_pred = self.cls_head(features)
+        return (y_pred, features)
