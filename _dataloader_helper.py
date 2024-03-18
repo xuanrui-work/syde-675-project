@@ -101,3 +101,58 @@ class MNIST2USPS(LoaderHelperBase):
         else:
             self.src_train, self.src_val, self.src_test = usps_train, usps_val, usps_test
             self.tgt_train, self.tgt_val, self.tgt_test = mnist_train, mnist_val, mnist_test
+
+class MNIST2SVHN(LoaderHelperBase):
+    def __init__(
+        self,
+        reverse=False,
+        image_size=(32, 32),
+        mnist_save_dir='./dataset/mnist', svhn_save_dir='./dataset/svhn',
+        **kwargs
+    ):
+        super().__init__(**kwargs)
+
+        mnist_transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Resize(image_size),
+            transforms.Lambda(lambda x: x.repeat(3, 1, 1)),
+        ])
+        svhn_transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Resize(image_size),
+        ])
+
+        mnist_train = torchvision.datasets.MNIST(
+            root=mnist_save_dir,
+            train=True,
+            transform=mnist_transform,
+            download=True
+        )
+        mnist_test = torchvision.datasets.MNIST(
+            root=mnist_save_dir,
+            train=False,
+            transform=mnist_transform,
+            download=True
+        )
+        mnist_train, mnist_val = torch.utils.data.random_split(mnist_train, [1-self.val_split, self.val_split])
+
+        svhn_train = torchvision.datasets.SVHN(
+            root=svhn_save_dir,
+            split='train',
+            transform=svhn_transform,
+            download=True
+        )
+        svhn_test = torchvision.datasets.SVHN(
+            root=svhn_save_dir,
+            split='test',
+            transform=svhn_transform,
+            download=True
+        )
+        svhn_train, svhn_val = torch.utils.data.random_split(svhn_train, [1-self.val_split, self.val_split])
+
+        if not reverse:
+            self.src_train, self.src_val, self.src_test = mnist_train, mnist_val, mnist_test
+            self.tgt_train, self.tgt_val, self.tgt_test = svhn_train, svhn_val, svhn_test
+        else:
+            self.src_train, self.src_val, self.src_test = svhn_train, svhn_val, svhn_test
+            self.tgt_train, self.tgt_val, self.tgt_test = mnist_train, mnist_val, mnist_test
